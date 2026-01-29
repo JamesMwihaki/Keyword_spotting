@@ -12,7 +12,7 @@
 - **Voice-Activated Actuation**: Integrated motor control logic that maps specific vocal intents ("Drop" vs. "Raise") to physical hardware movement.
 - **Optimized Resource Management**: Efficient memory handling to run both the Wi-Fi stack and the Machine Learning inference engine within the ESP32’s SRAM limits.
 
-## 🏗 Architecture & Hardware
+## Architecture & Hardware
 
 The system captures raw audio data, processes it through a Signal Processing (DSP) block, and runs inference using a Neural Network-all on the edge.
 
@@ -33,7 +33,7 @@ Or a board that has most of this included.
 | SD | GPIO 32 | I2S Serial Data |
 | L/R | GND | Left Channel |
 
-## 🧠 Machine Learning Model
+## Machine Learning Model
 The model was built using **Edge Impulse**.
 
 * **Dataset**: AI-generated voices (OpenAI).
@@ -43,16 +43,15 @@ The model was built using **Edge Impulse**.
 
 ### ESP32 Firmware
 - Flash the code in the `Main` directory to your ESP32 using the Arduino IDE.
--Access Point: The ESP32 operates as an Access Point. You can customize the SSID and Password in NetworkConfig.cpp.
+- Access Point: The ESP32 operates as an Access Point. I have a the (SSID and Password) but you can also customize them in NetworkConfig.cpp.
 
 ## Challenges with this approach
-- False positives: When they occurred, an action was performed in the real world (WE CAN'T HAVE THAT).
-- The system was biased against me: The AI-generated training voices did not account for my thick Kenyan accent. This resulted in poor recognition for the primary user (me!).
-- 
+- False positives: When they occurred, the motors moved (WE CAN'T HAVE THAT).
+- The system was biased against me: The AI-generated training voices did not account for my thick Kenyan accent. This resulted in poor recognition for the primary user (imagine creating something that refuses to listen to you—sorry to all the moms!!!). After retraining and providing a rich sample of our voice them model was able to recognize my voice
+  
 ## Project improvements
 - Eliminate false positives causing action in the physical world.
 - The safety check does not do its work as much as I would like.
-- Train the TinyML to include my voice (imagine creating something that refuses to listen to you—sorry to all the moms!!!).
 
-## ⚖️ License
+## License
 This project is open-source under the [MIT License](LICENSE).
