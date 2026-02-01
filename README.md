@@ -37,7 +37,7 @@ Or a board that has most of this included.
 The model was built using **Edge Impulse**.
 
 * **Dataset**: AI-generated voices (OpenAI).
-* **Classes**: `Drop`, `Raise`, `Background`.
+* **Classes**: `Drop_green_screen`, `Raise_green_screen`, `Background`.
 * **DSP Block**: Spectrogram / MFE (Mel Frequency Energy).
 * **Inference Engine**: EON™ Compiler.
 
