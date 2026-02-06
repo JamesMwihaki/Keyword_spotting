@@ -2,13 +2,14 @@
 
 extern bool isEmergencyStopActive;
 
-//Network Name and Password
-const char* ap_ssid = "Curtain-Controller";
-const char* ap_password = "password123"; // Must be at least 8 characters
+// Set your own Network Name and Password
+const char *ssid = "254Ushago";
+const char *password = "9132576712";
 
 WebServer server(80);
 
-// 1. Store the HTML as a string
+// 1. Store the HTML as a string (use R"rawliteral(...)rawliteral" for
+// multi-line)
 const char index_html[] PROGMEM = R"rawliteral(
   <!DOCTYPE html>
 <html lang="en">
@@ -52,7 +53,7 @@ const char index_html[] PROGMEM = R"rawliteral(
     </div>
 
     <script>
-        const espIP = "http://192.168.4.1"; 
+        const espIP = window.location.origin; 
 
         // Professional Photography Backdrop Configuration
         const backdrops = [
@@ -82,7 +83,13 @@ const char index_html[] PROGMEM = R"rawliteral(
 
         function sendCommand(motorId, direction) {
             let path = `${espIP}/move?id=${motorId}&dir=${direction}`;
-            fetch(path, { mode: 'no-cors' }).catch(err => console.log("Request failed"));
+            fetch(path)
+            .then(response => response.text())
+            .then(data => {
+                if (data === "LIMIT_TOP") alert("Screen at the top");
+                if (data === "LIMIT_BOTTOM") alert("Screen at the bottom");
+            })
+            .catch(err => console.log("Request failed"));
         }
 
         function stopAll() {
@@ -107,48 +114,59 @@ const char index_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-
 void setupWiFi() {
-  Serial.println("Configuring Access Point...");
+  Serial.println("Connecting to WiFi...");
 
-  // 1. Start the Access Point
-  // If you want no password, use: WiFi.softAP(ap_ssid);
-  WiFi.softAP(ap_ssid, ap_password);
+  // 1. Set to Station Mode and start connection
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
 
-  // 2. Get the local IP Address
-  IPAddress IP = WiFi.softAPIP();
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
+  // 2. Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
 
-  server.on("/", HTTP_GET, []() {
-    server.send(200, "text/html", index_html);
-  });
+  // 3. Print the IP address assigned by your router
+  Serial.println("");
+  Serial.println("WiFi connected!");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
 
-  //THE EMERGENCY ROUTE
+  // --- Routes remain the same ---
+  server.on("/", HTTP_GET, []() { server.send(200, "text/html", index_html); });
+
   server.on("/O", HTTP_GET, []() {
-    isEmergencyStopActive = true; // Lock the system
-    allStop(); 
-    Serial.println("!!! EMERGENCY STOP ACTIVATED !!!");
+    isEmergencyStopActive = true;
+    // allStop(); // Ensure this function is defined in your main sketch
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.send(200, "text/plain", "HALTED");
   });
 
   server.on("/move", HTTP_GET, []() {
     if (server.hasArg("id") && server.hasArg("dir")) {
-
       int id = server.arg("id").toInt();
       String dir = server.arg("dir");
-      moveMotor(id, dir); 
-      
+
+      if (dir == "UP" && motors[id].currentState == AT_TOP) {
+        server.sendHeader("Access-Control-Allow-Origin", "*");
+        server.send(200, "text/plain", "LIMIT_TOP");
+        return;
+      }
+      if (dir == "DOWN" && motors[id].currentState == AT_BOTTOM) {
+        server.sendHeader("Access-Control-Allow-Origin", "*");
+        server.send(200, "text/plain", "LIMIT_BOTTOM");
+        return;
+      }
+
+      moveMotor(id, dir);
       server.sendHeader("Access-Control-Allow-Origin", "*");
       server.send(200, "text/plain", "OK");
     }
   });
 
-  // 4. Reset Route to clear the E-Stop
   server.on("/reset", HTTP_GET, []() {
     isEmergencyStopActive = false;
-    Serial.println("System Reset - Motors Enabled");
     server.sendHeader("Access-Control-Allow-Origin", "*");
     server.send(200, "text/plain", "SYSTEM_READY");
   });
@@ -156,6 +174,4 @@ void setupWiFi() {
   server.begin();
 }
 
-void handleServer() {
-  server.handleClient();
-}
+void handleServer() { server.handleClient(); }

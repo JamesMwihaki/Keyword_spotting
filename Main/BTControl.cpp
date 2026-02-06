@@ -11,7 +11,7 @@ void setupBluetooth() {
   }
 }
 
-//Handle the incoming messages
+// Create a new function to handle the incoming messages
 void checkBluetooth() {
   if (SerialBT.available()) {
     String data = SerialBT.readStringUntil('\n'); 

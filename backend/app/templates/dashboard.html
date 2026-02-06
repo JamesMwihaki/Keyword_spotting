@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Voice Bridge Control</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        .grid-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 12px;
+            width: 280px;
+            border-top: 5px solid;
+        }
+
+        .color-green {
+            border-color: #00FF00;
+        }
+
+        .color-blue {
+            border-color: #0000FF;
+        }
+
+        .color-white {
+            border-color: #FFFFFF;
+        }
+
+        .color-black {
+            border-color: #000000;
+        }
+
+        .color-grey {
+            border-color: #808080;
+        }
+
+        .color-rose {
+            border-color: #FF66CC;
+        }
+
+        .btn {
+            width: 45%;
+            padding: 12px;
+            margin: 5px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #444;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+        }
+
+        .error-msg {
+            background: #d32f2f;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px auto;
+            max-width: 400px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Voice Bridge Dashboard</h1>
+    <div id="error-box" class="error-msg"></div>
+    <div class="grid-container" id="controls">
+        <!-- JS will populate -->
+    </div>
+
+    <script>
+        const backdrops = [
+            { name: "Green Screen", class: "color-green", id: 0 },
+            { name: "Chroma Blue", class: "color-blue", id: 1 },
+            { name: "Arctic White", class: "color-white", id: 2 },
+            { name: "Jet Black", class: "color-black", id: 3 },
+            { name: "Neutral Grey", class: "color-grey", id: 4 },
+            { name: "Rose Petal", class: "color-rose", id: 5 }
+        ];
+
+        const controlsDiv = document.getElementById('controls');
+        const errorBox = document.getElementById('error-box');
+
+        backdrops.forEach(bd => {
+            controlsDiv.innerHTML += `
+                <div class="section ${bd.class}">
+                    <h3>${bd.name}</h3>
+                    <button class="btn" onmousedown="move(${bd.id}, 'UP')" onmouseup="move(${bd.id}, 'STOP')">UP ▲</button>
+                    <button class="btn" onmousedown="move(${bd.id}, 'DOWN')" onmouseup="move(${bd.id}, 'STOP')">DOWN ▼</button>
+                </div>
+            `;
+        });
+
+        function move(id, dir) {
+            fetch(`/control?id=${id}&dir=${dir}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status && data.status.startsWith("LIMIT")) {
+                        errorBox.innerText = data.status;
+                        errorBox.style.display = "block";
+                        setTimeout(() => errorBox.style.display = "none", 3000);
+                    } else if (!data.success) {
+                        console.error("Command failed");
+                    }
+                });
+        }
+    </script>
+</body>
+
+</html>

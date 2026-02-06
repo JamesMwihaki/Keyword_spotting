@@ -3,8 +3,8 @@
 
 #include <Arduino.h>
 
-//Thresh for the confidence scores to move or not move the motors
-#define CONFIDENCE_THRESHOLD 0.90f
+// 0.80f is 80% confidence. 1.00f is usually too strict.
+#define CONFIDENCE_THRESHOLD 0.99f
 
 void setupVoice();
 void checkVoice();
