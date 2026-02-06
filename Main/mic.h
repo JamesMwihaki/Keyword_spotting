@@ -3,11 +3,10 @@
 
 #include <Arduino.h>
 
-// 0.80f is 80% confidence. 1.00f is usually too strict.
-#define CONFIDENCE_THRESHOLD 0.99f
+#define CONFIDENCE_THRESHOLD 0.95f
 
 void setupVoice();
 void checkVoice();
-void start_motor_sequence(int index, const char* cmd);
+void start_motor_sequence(int index, const char *cmd);
 
 #endif

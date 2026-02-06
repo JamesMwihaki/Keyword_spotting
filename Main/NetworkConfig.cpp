@@ -2,9 +2,11 @@
 
 extern bool isEmergencyStopActive;
 
+#include "Secrets.h"
+
 // Set your own Network Name and Password
-const char *ssid = "254Ushago";
-const char *password = "9132576712";
+const char *ssid = WIFI_SSID;
+const char *password = WIFI_PASSWORD;
 
 WebServer server(80);
 

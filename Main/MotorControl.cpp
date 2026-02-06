@@ -49,12 +49,9 @@ void moveMotor(int id, String direction) {
     digitalWrite(dir2[id], LOW);
     ledcWrite(enPins[id], dutyCycle);
     motors[id].currentState = TRANSIT;
-    motors[id].startTime = millis(); // Used as 'lastUpdate' time
+    motors[id].startTime = millis();
     motors[id].isRunning = true;
-    // Assume moving UP takes us towards TOP.
-    // We will set AT_TOP when timer expires?
-    // Or we just stay in TRANSIT until timer expires, then we "assume" we are
-    // at the new state? Let's assume operation completes successfully.
+
   } else if (direction == "DOWN") {
     if (motors[id].currentPosition >= motors[id].duration) {
       Serial.println("Ignored DOWN: Max duration reached");
@@ -64,17 +61,13 @@ void moveMotor(int id, String direction) {
     digitalWrite(dir2[id], HIGH);
     ledcWrite(enPins[id], dutyCycle);
     motors[id].currentState = TRANSIT;
-    motors[id].startTime = millis(); // Used as 'lastUpdate' time
+    motors[id].startTime = millis();
     motors[id].isRunning = true;
   } else {
     digitalWrite(dir1[id], LOW);
     digitalWrite(dir2[id], LOW);
     ledcWrite(enPins[id], 0);
     motors[id].isRunning = false;
-    // State update happens in updateMotors or here?
-    // If we stop manually, we might be in TRANSIT (undefined position).
-    // Let's leave it as TRANSIT if stopped mid-way, or user defined?
-    // But the 5s timer is what defines "AT_BOTTOM".
   }
 }
 

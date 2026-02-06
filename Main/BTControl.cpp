@@ -11,11 +11,11 @@ void setupBluetooth() {
   }
 }
 
-// Create a new function to handle the incoming messages
 void checkBluetooth() {
+  //  handle the incoming messages
   if (SerialBT.available()) {
-    String data = SerialBT.readStringUntil('\n'); 
-    data.trim(); 
+    String data = SerialBT.readStringUntil('\n');
+    data.trim();
 
     int commaIndex = data.indexOf(',');
     if (commaIndex != -1) {
@@ -27,7 +27,7 @@ void checkBluetooth() {
       Serial.println(id);
       Serial.println("");
       Serial.println(id);
-      
+
       // Safety check: ensure ID is within your array range (0-5)
       if (id >= 0 && id <= 5) {
         moveMotor(id, command);

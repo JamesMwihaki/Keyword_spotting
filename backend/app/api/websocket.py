@@ -11,9 +11,7 @@ import asyncio
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Initialize Gemini Manager once (or per connection if needed, but per app is better if stateless)
-# However, the chat session is stateful, so we might want it per connection.
-# The previous code started a chat per connection.
+
 
 @router.websocket("/ws/audio")
 async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):

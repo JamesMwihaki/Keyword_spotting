@@ -12,7 +12,6 @@ enum SystemState { STATE_TINYML, STATE_STREAMING, STATE_AWAITING_RESPONSE };
 volatile SystemState systemState = STATE_TINYML;
 WebsocketsClient client;
 
-// REPLACE THIS WITH YOUR PYTHON SERVER IP
 const char *websocket_server_host = "192.168.1.124";
 const int websocket_server_port = 8000;
 
@@ -90,7 +89,6 @@ void onMessageCallback(WebsocketsMessage message) {
   if (error) {
     Serial.print("deserializeJson() failed: ");
     Serial.println(error.c_str());
-    // Could be simple string message not JSON, ignore or handle
     return;
   }
 
@@ -127,20 +125,13 @@ void checkVoice() {
 
   if (systemState == STATE_STREAMING) {
     // Connection Guard
-    if (!client.available()) { // check connectivity (available() checks
-                               // connected state internal bool often)
-      // WebsocketsClient doesn't have a simple isConnected() public, but
-      // available() or poll() handles state. Actually, let's use check
-      // connectivity via ping or just assume close if poll fails? library
-      // usually handles it. But we can check if client is open? The library
-      // uses client.available() as `client.stream` check. Let's assume on
-      // disconnect we get callback or state change.
+    if (!client.available()) {
     }
 
     // Check Timeout Phase A
     if (timeInState > RECORD_DURATION) {
       Serial.println("Streaming finished. Waiting for Gemini response...");
-      setRGB(255, 165, 0); // Orange (Processing)
+      setRGB(255, 165, 0);
       systemState = STATE_AWAITING_RESPONSE;
       stateSwitchTime = millis(); // Reset timer for next phase
     }
@@ -229,18 +220,9 @@ static void capture_samples(void *arg) {
       }
 
       if (systemState == STATE_STREAMING) {
-        // Connection Guard inside the task
-        // We can't easily check client state here safely constantly effectively
-        // without mutex, but if sendBinary fails it returns false? (Library
-        // dependent)
         bool success = client.sendBinary((const char *)sampleBuffer,
                                          samplesCount * sizeof(int16_t));
         if (!success) {
-          // If send fails, connection likely dropped
-          // We shouldn't change systemState here due to race conditions maybe,
-          // but strictly we can set a flag or just let the main loop handle
-          // timeout. For strict Phase A requirement: We let the main loop
-          // timeout handle it, or we can break.
         }
       } else if (systemState == STATE_TINYML) {
         audio_inference_callback(samplesCount);
