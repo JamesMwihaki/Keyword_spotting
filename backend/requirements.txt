@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+google-generativeai
+python-dotenv
+websockets
+python-multipart
+requests
+itsdangerous
+pyngrok
+pydantic-settings
+httpx
+jinja2

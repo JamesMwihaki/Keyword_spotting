@@ -3,11 +3,15 @@
 
 #include <Arduino.h>
 
+enum ScreenState { AT_TOP, AT_BOTTOM, TRANSIT };
+
 struct MotorLogic {
-    int id;
-    unsigned long startTime;
-    bool isRunning;
-    const long duration;
+  int id;
+  unsigned long startTime;
+  bool isRunning;
+  const long duration;
+  ScreenState currentState;
+  long currentPosition; // 0 to duration
 };
 
 // Hardware Constants
