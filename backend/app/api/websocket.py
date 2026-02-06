@@ -44,7 +44,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
         if len(audio_buffer) > 0:
              logger.info(f"Client disconnected with {len(audio_buffer)} bytes remaining. Processing...")
              try:
-                # We do NOT propagate TimeoutError here usually as client is gone
                  await process_and_respond(websocket, audio_buffer, gemini)
              except Exception as e:
                 logger.error(f"Error processing final buffer: {e}")
