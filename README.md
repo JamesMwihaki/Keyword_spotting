@@ -47,7 +47,7 @@ The model was built using **Edge Impulse**.
 
 ## Challenges with this approach
 - False positives: When they occurred, the motors moved (WE CAN'T HAVE THAT).
-- The system was biased against me: The AI-generated training voices did not account for my thick Kenyan accent. This resulted in poor recognition for the primary user (imagine creating something that refuses to listen to you—sorry to all the moms!!!). After retraining and providing a rich sample of our voice them model was able to recognize my voice
+- The system was biased against me: The AI-generated training voices did not account for my thick Kenyan accent. This resulted in poor recognition for the primary user (imagine creating something that refuses to listen to you—sorry to all the moms!!!). After retraining and providing a rich sample of my voice them model was able to recognize my voice
   
 ## Project improvements
 - Eliminate false positives causing action in the physical world.
