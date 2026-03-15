@@ -1,6 +1,6 @@
 # ESP32 Keyword Spotting
 
-## Edge computing at its finest.
+## Edge computing
 - In this project, I am using an ESP32 connected to a microphone to listen for phrases.
 - In this case, the phrases I trained the TinyML on were "drop green screen" and "raise green screen." I also included some noise and background sounds in the training dataset.
 - I used Edge Impulse for data collection and ML, and deployed the model as an Arduino library.
