@@ -30,7 +30,13 @@ void checkBluetooth() {
 
       // Safety check: ensure ID is within your array range (0-5)
       if (id >= 0 && id <= 5) {
-        moveMotor(id, command);
+        int dir = DIR_STOP;
+        if (command == "UP")
+          dir = DIR_UP;
+        else if (command == "DOWN")
+          dir = DIR_DOWN;
+
+        moveMotor(id, dir);
       }
     }
   }

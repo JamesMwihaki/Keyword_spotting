@@ -5,6 +5,12 @@
 
 enum ScreenState { AT_TOP, AT_BOTTOM, TRANSIT };
 
+struct MotorPins {
+  int step; // -1 = not wired yet
+  int dir;
+  int en;
+};
+
 struct MotorLogic {
   int id;
   unsigned long startTime;
@@ -18,10 +24,13 @@ struct MotorLogic {
 extern const int numMotors;
 extern bool isEmergencyStopActive;
 extern MotorLogic motors[];
+extern MotorPins motorPins[];
+
+enum MotorDirection { DIR_STOP = 0, DIR_UP = 1, DIR_DOWN = 2 };
 
 // Function Prototypes
 void setupMotors();
-void moveMotor(int id, String direction);
+void moveMotor(int id, int direction);
 void updateMotors();
 void allStop();
 

@@ -149,6 +149,7 @@ void setupWiFi() {
     if (server.hasArg("id") && server.hasArg("dir")) {
       int id = server.arg("id").toInt();
       String dir = server.arg("dir");
+      Serial.printf("HTTP Command: Motor %d -> %s\n", id, dir.c_str());
 
       if (dir == "UP" && motors[id].currentState == AT_TOP) {
         server.sendHeader("Access-Control-Allow-Origin", "*");
@@ -161,7 +162,13 @@ void setupWiFi() {
         return;
       }
 
-      moveMotor(id, dir);
+      int direction = DIR_STOP;
+      if (dir == "UP")
+        direction = DIR_UP;
+      else if (dir == "DOWN")
+        direction = DIR_DOWN;
+
+      moveMotor(id, direction);
       server.sendHeader("Access-Control-Allow-Origin", "*");
       server.send(200, "text/plain", "OK");
     }

@@ -82,6 +82,22 @@
             max-width: 400px;
             display: none;
         }
+
+        .position-badge {
+            display: inline-block;
+            margin: 6px 0 2px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            background: #444;
+            color: #aaa;
+        }
+
+        .position-badge.TOP    { background: #1b5e20; color: #a5d6a7; }
+        .position-badge.BOTTOM { background: #4a148c; color: #ce93d8; }
+        .position-badge.UNKNOWN { background: #444;   color: #aaa; }
     </style>
 </head>
 
@@ -109,6 +125,8 @@
             controlsDiv.innerHTML += `
                 <div class="section ${bd.class}">
                     <h3>${bd.name}</h3>
+                    <span id="motor-status-${bd.id}" class="position-badge UNKNOWN">UNKNOWN</span>
+                    <br>
                     <button class="btn" onmousedown="move(${bd.id}, 'UP')" onmouseup="move(${bd.id}, 'STOP')">UP ▲</button>
                     <button class="btn" onmousedown="move(${bd.id}, 'DOWN')" onmouseup="move(${bd.id}, 'STOP')">DOWN ▼</button>
                 </div>
@@ -126,8 +144,27 @@
                     } else if (!data.success) {
                         console.error("Command failed");
                     }
+                    refreshMotorStates();
                 });
         }
+
+        async function refreshMotorStates() {
+            try {
+                const states = await fetch('/motor-states').then(r => r.json());
+                for (const [id, state] of Object.entries(states)) {
+                    const el = document.getElementById(`motor-status-${id}`);
+                    if (!el) continue;
+                    const pos = state.position || 'UNKNOWN';
+                    el.textContent = pos;
+                    el.className = `position-badge ${pos}`;
+                }
+            } catch (e) {
+                console.error("Failed to refresh motor states", e);
+            }
+        }
+
+        setInterval(refreshMotorStates, 3000);
+        refreshMotorStates();
     </script>
 </body>
 

@@ -10,3 +10,5 @@ pyngrok
 pydantic-settings
 httpx
 jinja2
+gTTS
+pydub

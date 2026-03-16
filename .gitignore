@@ -3,9 +3,15 @@
 backend/.env
 .env.local
 .env.*.local
+.gitignore
+agent_next_steps.md
 
 # Audio recordings
 backend/audio_commands/
+
+
+
+
 
 # Python
 __pycache__/
