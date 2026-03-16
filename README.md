@@ -1,57 +1,147 @@
-# ESP32 Keyword Spotting
+# Dawn — Voice-Controlled Backdrop System
 
-## Edge computing
-- In this project, I am using an ESP32 connected to a microphone to listen for phrases.
-- In this case, the phrases I trained the TinyML on were "drop green screen" and "raise green screen." I also included some noise and background sounds in the training dataset.
-- I used Edge Impulse for data collection and ML, and deployed the model as an Arduino library.
-- I have my ESP32 connected to two motors such that "drop green screen" moves the motor at ID[0] forward and "raise green screen" moves the motor at ID[1] backward.
+A voice-activated motor control system for a studio. Say **"Hey Dawn"** and give a natural language command to raise or lower any of 6 fabric backdrop screens. The ESP32 handles wake word detection locally using TinyML; everything else is processed by a FastAPI backend powered by Google Gemini AI.
+
+---
+
+## How It Works
+
+```
+"Hey Dawn, lower the green screen"
+        │
+        ▼
+ESP32 (TinyML wake word detection)
+        │  streams 3s of audio via WebSocket (Might think about using a silence detection algorithm)
+        ▼
+FastAPI Backend
+        │  sends WAV to Gemini 2.0 Flash (function calling)
+        ▼
+Motor command → HTTP → ESP32 motor controller
+        │
+        ▼
+TTS response (ElevenLabs / gTTS) → played back through speaker
+```
+
+---
 
 ## Features
-- **Real-Time Edge Inference**: Performs local keyword spotting directly on the ESP32 using a quantized TinyML model, eliminating the need for cloud processing or internet latency.
-- **High-Fidelity Audio Capture**: Utilizes the I2S protocol with an INMP441 MEMS microphone for 16-bit, low-noise digital audio sampling.
-- **Voice-Activated Actuation**: Integrated motor control logic that maps specific vocal intents ("Drop" vs. "Raise") to physical hardware movement.
-- **Optimized Resource Management**: Efficient memory handling to run both the Wi-Fi stack and the Machine Learning inference engine within the ESP32’s SRAM limits.
 
-## Architecture & Hardware
+- **Edge Wake Word Detection**: TinyML model on the ESP32 (via Edge Impulse) listens for the wake phrase locally — no cloud round-trip until triggered.
+- **Natural Language Commands**: Google Gemini 2.0 Flash interprets free-form voice commands, no rigid phrasing required.
+- **6 Backdrop Motors**: Independent stepper motor control (green, blue, white, black, grey, rose screens) via TMC2209 drivers.
+- **Voice Feedback**: Spoken responses via ElevenLabs voice cloning or gTTS fallback, played through an I2S speaker.
+- **Web Dashboard**: Manual motor control UI with real-time position sync, accessible via browser.
+- **Retry Logic**: Up to 3 attempts if a command isn't understood. API errors don't count against retries.
+- **Command Logging**: All commands logged to JSONL for auditing and debugging.
 
-The system captures raw audio data, processes it through a Signal Processing (DSP) block, and runs inference using a Neural Network-all on the edge.
+---
 
-### Hardware Requirements
-* **Microcontroller**: ESP32
-* **Microphone**: INMP441 I2S Omnidirectional Microphone
-* **Actuator**: DC Motor controlled via L298N (or similar) motor driver
-* **Power**: External 5V/12V source for the motor
-Or a board that has most of this included.
+## Architecture
 
-### Wiring Diagram
-| INMP441 Pin | ESP32 Pin | Function |
+### Hardware (ESP32)
+
+| Component | Part | Interface |
 | :--- | :--- | :--- |
-| VDD | 3V3 | Power |
-| GND | GND | Ground |
-| SCK | GPIO 14 | I2S Serial Clock |
-| WS | GPIO 25 | I2S Word Select |
-| SD | GPIO 32 | I2S Serial Data |
-| L/R | GND | Left Channel |
+| Microcontroller | ESP32 | — |
+| Microphone | INMP441 MEMS | I2S |
+| Motor Drivers | TMC2209 (×6) | Step/Dir/Enable |
+| Speaker | I2S DAC | I2S |
+| Status LEDs | 5× individual | GPIO |
+
+### Backend (FastAPI)
+
+```
+backend/app/
+├── main.py                  # App entry point, router mounting
+├── config.py                # Pydantic Settings, env validation
+├── api/
+│   ├── auth.py              # Session-based login/logout
+│   ├── dashboard.py         # Manual motor control UI
+│   └── websocket.py         # Audio streaming + Gemini processing
+├── services/
+│   ├── gemini_service.py    # Gemini 2.0 Flash with function calling
+│   ├── hardware.py          # HTTP commands to ESP32
+│   ├── motor_state.py       # Thread-safe motor position tracking
+│   └── command_logger.py    # JSONL audit logging
+└── utils/
+    ├── audio_tools.py       # WAV header generation
+    └── audio_utils.py       # TTS (ElevenLabs / gTTS)
+```
+
+### ESP32 State Machine
+
+| State | LED | Description |
+| :--- | :--- | :--- |
+| Listening | Green | Running TinyML wake word detection |
+| Streaming | Blue | Sending audio to backend |
+| Awaiting Response | Red | Waiting for Gemini result |
+| Playback | Yellow | Playing TTS response |
+
+---
 
 ## Machine Learning Model
-The model was built using **Edge Impulse**.
 
-* **Dataset**: AI-generated voices (OpenAI).
-* **Classes**: `Drop_green_screen`, `Raise_green_screen`, `Background`.
-* **DSP Block**: Spectrogram / MFE (Mel Frequency Energy).
-* **Inference Engine**: EON™ Compiler.
+Built with **Edge Impulse**.
 
-### ESP32 Firmware
-- Flash the code in the `Main` directory to your ESP32 using the Arduino IDE.
-- Access Point: The ESP32 operates as an Access Point. I have a the (SSID and Password) but you can also customize them in NetworkConfig.cpp.
+- **Wake Phrase**: "Hey Dawn"
+- **Training Data**: Human voices including accent-specific samples (Kenyan English)
+- **DSP Block**: MFE (Mel Frequency Energy)
+- **Inference Engine**: EON™ Compiler, deployed as Arduino library
 
-## Challenges with this approach
-- False positives: When they occurred, the motors moved (WE CAN'T HAVE THAT).
-- The system was biased against me: The AI-generated training voices did not account for my thick Kenyan accent. This resulted in poor recognition for the primary user (imagine creating something that refuses to listen to you—sorry to all the moms!!!). After retraining and providing a rich sample of my voice them model was able to recognize my voice
-  
-## Project improvements
-- Eliminate false positives causing action in the physical world.
-- The safety check does not do its work as much as I would like.
+---
+
+## Setup
+
+### Requirements
+
+**Python dependencies** (`backend/requirements.txt`):
+- FastAPI, Uvicorn
+- google-generativeai
+- websockets, httpx
+- pydantic-settings
+- gtts, pydub
+- pyngrok
+
+**Arduino libraries**:
+- ESP32 Arduino Core
+- WebsocketsClient
+- ArduinoJson
+- Edge Impulse inferencing library (JamesMwihaki-project-1)
+
+### Environment Variables
+
+Create `backend/.env`:
+
+```
+ADMIN_USER=your_username
+ADMIN_PASS=your_password
+SECRET_KEY=<32+ character random string>
+GEMINI_API_KEY=...
+ESP32_IP=192.168.x.x
+ELEVENLABS_API_KEY=...          # optional, falls back to gTTS
+ELEVENLABS_VOICE_ID=...         # optional
+NGROK_AUTHTOKEN=...             # optional, for remote access
+NGROK_DOMAIN=...                # optional
+```
+
+### Firmware
+
+Flash the `Main/` directory to your ESP32 using Arduino IDE. WiFi credentials and the WebSocket token go in `Main/Secrets.h` (gitignored — create locally):
+
+```cpp
+#define WIFI_SSID "your_ssid"
+#define WIFI_PASSWORD "your_password"
+#define SECRET_KEY "your_websocket_token"
+```
+
+---
+
+## Challenges
+- We need to make sure we don't loose track of the current status of the screens, even when the esp32 shuts off
+
+
+---
 
 ## License
+
 This project is open-source under the [MIT License](LICENSE).

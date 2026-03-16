@@ -1,6 +1,7 @@
 
 import struct
 
+
 def create_wav_header(pcm_data: bytes, sample_rate=16000, channels=1, bits_per_sample=16) -> bytes:
     """
     Creates a WAV header for the given PCM data.
