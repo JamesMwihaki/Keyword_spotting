@@ -137,7 +137,8 @@ Flash the `Main/` directory to your ESP32 using Arduino IDE. WiFi credentials an
 ---
 
 ## Challenges
-- We need to make sure we don't loose track of the current status of the screens, even when the esp32 shuts off
+- We need to make sure we don't loose track of the current status of the screens, even when the esp32 and the server shuts off maybe add a small database and querry the screen status from there
+- 
 
 
 ---
