@@ -9,16 +9,12 @@ A voice-activated motor control system for a studio. Say **"Hey Dawn"** and give
 ```
 "Hey Dawn, lower the green screen"
         │
-        ▼
 ESP32 (TinyML wake word detection)
         │  streams 3s of audio via WebSocket (Might think about using a silence detection algorithm)
-        ▼
 FastAPI Backend
         │  sends WAV to Gemini 2.0 Flash (function calling)
-        ▼
 Motor command → HTTP → ESP32 motor controller
         │
-        ▼
 TTS response (ElevenLabs / gTTS) → played back through speaker
 ```
 
@@ -71,7 +67,6 @@ backend/app/
 ### ESP32 State Machine
 
 | State | LED | Description |
-| :--- | :--- | :--- |
 | Listening | Green | Running TinyML wake word detection |
 | Streaming | Blue | Sending audio to backend |
 | Awaiting Response | Red | Waiting for Gemini result |
@@ -105,7 +100,6 @@ Gemini 2.0 Flash processes WAV (9s timeout)
 ### ESP32 Events
 
 | Event JSON | Meaning | ESP32 action |
-| :--- | :--- | :--- |
 | `{"event": "retry_listening"}` | Command not understood, try again | Skip wake word, stream next audio |
 | `{"event": "command_fulfilled"}` | Command executed (or retries exhausted) | Return to wake word detection |
 
@@ -119,7 +113,6 @@ Gemini 2.0 Flash processes WAV (9s timeout)
 ### Retry Logic
 
 | Attempt | What happens |
-| :--- | :--- |
 | 1–2 | Gemini's own clarification text is spoken; `retry_listening` sent |
 | 3 (final) | "I couldn't process your command. Resetting…" spoken; `command_fulfilled` sent |
 | API error | No retry consumed; ESP32 recovers independently via its `RESPONSE_TIMEOUT` |
