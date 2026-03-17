@@ -77,6 +77,52 @@ backend/app/
 | Awaiting Response | Red | Waiting for Gemini result |
 | Playback | Yellow | Playing TTS response |
 
+
+---
+
+## Response Flow
+
+### WebSocket Event Protocol
+
+After the ESP32 sends audio and signals `end_of_audio`, the backend goes through this pipeline:
+
+```
+ESP32 sends audio chunks + "end_of_audio"
+Backend wraps PCM bytes → WAV header → saves to audio_commands/
+Gemini 2.0 Flash processes WAV (9s timeout)
+       - API error / timeout - No retry consumed
+       - No command detected ─ TTS/elevenlabs: "I didn't understand…"
+                                  send_bytes (PCM chunks, 1KB each)
+                                  send_text: {"event": "retry_listening"}
+                                  (retry counter +1; at 3 → "Resetting…" + command_fulfilled)
+       - Command(s) found ─ HTTP to ESP32 motor controller
+                                   Check motor status (OK / LIMIT_TOP / LIMIT_BOTTOM)
+                                   TTS: "Raising the Green Screen." etc.
+                                   send_bytes (PCM audio)
+                                   send_text: {"event": "command_fulfilled"}
+```
+
+### ESP32 Events
+
+| Event JSON | Meaning | ESP32 action |
+| :--- | :--- | :--- |
+| `{"event": "retry_listening"}` | Command not understood, try again | Skip wake word, stream next audio |
+| `{"event": "command_fulfilled"}` | Command executed (or retries exhausted) | Return to wake word detection |
+
+### Audio Response Pipeline
+
+1. **Text generation** — Gemini returns a plain-text confirmation (e.g. `"Raising the Green Screen."`)
+2. **TTS synthesis** — `text_to_pcm()` calls ElevenLabs (voice-cloned) or falls back to gTTS
+3. **Chunked broadcast** — PCM audio sent in 1 KB frames with 10 ms delays to stay within the ESP32 WebSocket buffer
+4. **Ordering guarantee** — Audio bytes are always sent *before* the event signal so the ESP32 is in `STATE_PLAYBACK`, not `STATE_AWAITING_RESPONSE`, when it receives the event
+
+### Retry Logic
+
+| Attempt | What happens |
+| :--- | :--- |
+| 1–2 | Gemini's own clarification text is spoken; `retry_listening` sent |
+| 3 (final) | "I couldn't process your command. Resetting…" spoken; `command_fulfilled` sent |
+| API error | No retry consumed; ESP32 recovers independently via its `RESPONSE_TIMEOUT` |
 ---
 
 ## Machine Learning Model
@@ -137,8 +183,9 @@ Flash the `Main/` directory to your ESP32 using Arduino IDE. WiFi credentials an
 ---
 
 ## Challenges
-- We need to make sure we don't loose track of the current status of the screens, even when the esp32 and the server shuts off maybe add a small database and querry the screen status from there
-- 
+- We need to make sure we don't loose track of the current status of the screens, even when the esp32 and the         server shuts off maybe add a small database and querry the screen status.
+- There is still quite a bit of false positives on the tinyml, using gemini eliminated motor triggers but now         the speaker is triggered
+- is it possible, instead of recording and then send the recording to gemini, when the user say hey dawn we open a channel, that channel  remains open untill it detects silence. then if it adentifies there is a command it fullfill the command, if there is a command that is it can not understand it informs the user and if there is not command it's just noise nothing happends
 
 
 ---
